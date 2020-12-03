@@ -1,21 +1,21 @@
+use crate::error::GraphQLError;
 use reqwest::{
   header::{HeaderMap, HeaderName, HeaderValue},
-  Client, Error,
+  Client,
 };
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::str::FromStr;
-use std::borrow::Borrow;
 
 pub struct GQLClient {
-  endpoint: String,
+  endpoint: &'static str,
   header_map: HeaderMap,
 }
 
 #[derive(Serialize)]
 struct RequestBody<T: Serialize> {
-  query: String,
-  variables: T,
+  query: &'static str,
+  variables: Option<T>,
 }
 
 #[derive(Deserialize, Debug)]
@@ -24,11 +24,14 @@ struct GraphQLResponse<T> {
 }
 
 impl GQLClient {
-  pub fn new(endpoint: String) -> Self {
-    Self { endpoint, header_map: HeaderMap::new() }
+  pub fn new(endpoint: &'static str) -> Self {
+    Self {
+      endpoint,
+      header_map: HeaderMap::new(),
+    }
   }
 
-  pub fn new_with_headers(endpoint: String, headers: HashMap<String, String>) -> Self {
+  pub fn new_with_headers(endpoint: &'static str, headers: HashMap<String, String>) -> Self {
     let mut header_map = HeaderMap::new();
 
     for (key, value) in headers {
@@ -44,19 +47,29 @@ impl GQLClient {
     }
   }
 
-  pub async fn query<T: Serialize, K>(
+  pub async fn query<K>(&self, query: &'static str) -> Result<K, GraphQLError>
+  where
+    K: for<'de> Deserialize<'de>,
+  {
+    self.query_with_vars::<K, ()>(query, ()).await
+  }
+
+  pub async fn query_with_vars<K, T: Serialize>(
     &self,
-    query: String,
+    query: &'static str,
     variables: T,
-  ) -> Result<K, Error>
+  ) -> Result<K, GraphQLError>
   where
     K: for<'de> Deserialize<'de>,
   {
     let client = Client::new();
-    let body = RequestBody { query, variables };
+    let body = RequestBody {
+      query,
+      variables: Some(variables),
+    };
 
     let response = client
-      .post(&self.endpoint)
+      .post(self.endpoint)
       .json(&body)
       .headers(self.header_map.clone())
       .send()

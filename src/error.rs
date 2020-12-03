@@ -1,9 +1,9 @@
-use std::fmt;
-use serde::export::Formatter;
 use reqwest::Error;
+use serde::export::Formatter;
+use std::fmt;
 
 pub struct GraphQLError {
-  message: String
+  message: String,
 }
 
 impl GraphQLError {
@@ -22,14 +22,18 @@ impl fmt::Debug for GraphQLError {
   fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
     write!(
       f,
-      "GraphQL Error: {{ message: {}, file: {}, line: {} }}",
-      self.message, file!(), line!()
+      "GraphQL Client Error: {{ message: {}, file: {}, line: {} }}",
+      self.message,
+      file!(),
+      line!()
     )
   }
 }
 
 impl std::convert::From<reqwest::Error> for GraphQLError {
   fn from(error: Error) -> Self {
-    Self { message: error.to_string() }
+    Self {
+      message: error.to_string(),
+    }
   }
 }
