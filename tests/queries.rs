@@ -1,5 +1,6 @@
 use gql_client::Client;
 use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
 
 #[derive(Deserialize, Debug)]
 struct NodeList<T> {
@@ -55,7 +56,10 @@ pub async fn fetches_one_post() {
 
 #[tokio::test]
 pub async fn fetches_all_posts() {
-  let client = Client::new(ENDPOINT);
+  let mut headers = HashMap::new();
+  headers.insert("content-type", "application/json");
+
+  let client = Client::new_with_headers(ENDPOINT, headers);
 
   let query = r#"
     query AllPostsQuery {

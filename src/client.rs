@@ -31,14 +31,14 @@ impl GQLClient {
     }
   }
 
-  pub fn new_with_headers(endpoint: &'static str, headers: HashMap<String, String>) -> Self {
+  pub fn new_with_headers(endpoint: &'static str, headers: HashMap<&str, &str>) -> Self {
     let mut header_map = HeaderMap::new();
 
-    for (key, value) in headers {
-      header_map.insert(
-        HeaderName::from_str(&key).unwrap(),
-        HeaderValue::from_str(&value).unwrap(),
-      );
+    for (str_key, str_value) in headers {
+      let key = HeaderName::from_str(str_key).unwrap();
+      let val = HeaderValue::from_str(str_value).unwrap();
+
+      header_map.insert(key, val);
     }
 
     Self {
