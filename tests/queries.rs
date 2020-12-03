@@ -44,10 +44,7 @@ pub async fn fetches_one_post() {
 
   let variables = SinglePostVariables { id: 2 };
   let data = client
-    .query_with_vars::<SinglePost, SinglePostVariables>(
-      query,
-      variables
-    )
+    .query_with_vars::<SinglePost, SinglePostVariables>(query, variables)
     .await
     .unwrap();
 
@@ -71,10 +68,7 @@ pub async fn fetches_all_posts() {
     }
   "#;
 
-  let data: AllPosts = client
-    .query::<AllPosts>(query)
-    .await
-    .unwrap();
+  let data: AllPosts = client.query::<AllPosts>(query).await.unwrap();
 
   assert!(data.posts.data.len() >= 0 as usize);
 }
