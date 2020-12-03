@@ -3,6 +3,16 @@ name = "gql_client"
 version = "0.1.0"
 authors = ["Arthur Khlghatyan <arthur.khlghatyan@gmail.com>"]
 edition = "2018"
+description = "Minimal GraphQL client for Rust"
+readme = "README.md"
+homepage = "https://github.com/arthurkhlghatyan/gql-client-rs"
+repository = "https://github.com/arthurkhlghatyan/gql-client-rs"
+license = "MIT"
+keywords = ["graphql", "client", "async", "web", "http"]
+categories = ["web-programming", "asynchronous"]
+
+[badges]
+maintenance = { status = "actively-developed" }
 
 [dependencies]
 serde = { version = "1.0", features = ["derive"] }
