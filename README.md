@@ -38,22 +38,22 @@ pub struct Vars {
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
-  let endpoint = "https://graphqlzero.almansi.me/api";
-  let query = r#"
-    query UserByIdQuery($id: ID!) {
-      user(id: $id) {
-        id
-        name
-      }
-    }"#;
+    let endpoint = "https://graphqlzero.almansi.me/api";
+    let query = r#"
+        query UserByIdQuery($id: ID!) {
+            user(id: $id) {
+                id
+                name
+            }
+        }"#;
 
-     let client = Client::new(endpoint);
-     let vars = Vars { id: 1 };
-     let data = client.query_with_vars::<Data, Vars>(query, vars).await.unwrap();
+    let client = Client::new(endpoint);
+    let vars = Vars { id: 1 };
+    let data = client.query_with_vars::<Data, Vars>(query, vars).await.unwrap();
 
-     println!("Id: {}, Name: {}", data.user.id, data.user.name);
+    println!("Id: {}, Name: {}", data.user.id, data.user.name);
 
-     Ok(())
+    Ok(())
  }
  ```
 
