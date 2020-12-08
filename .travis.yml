@@ -3,6 +3,9 @@ rust:
   - stable
   - beta
   - nightly
+branches:
+  only:
+    - master
 jobs:
   allow_failures:
     - rust: nightly

@@ -1,4 +1,4 @@
-use crate::error::GraphQLError;
+use crate::error::{ GraphQLError, GraphQLErrorMessage };
 use reqwest::{
   header::{HeaderMap, HeaderName, HeaderValue},
   Client,
@@ -15,12 +15,13 @@ pub struct GQLClient {
 #[derive(Serialize)]
 struct RequestBody<T: Serialize> {
   query: &'static str,
-  variables: Option<T>,
+  variables: T,
 }
 
 #[derive(Deserialize, Debug)]
 struct GraphQLResponse<T> {
-  pub data: T,
+  data: Option<T>,
+  errors: Option<Vec<GraphQLErrorMessage>>
 }
 
 impl GQLClient {
@@ -65,18 +66,35 @@ impl GQLClient {
     let client = Client::new();
     let body = RequestBody {
       query,
-      variables: Some(variables),
+      variables,
     };
 
-    let response = client
+    let request = client
       .post(self.endpoint)
       .json(&body)
-      .headers(self.header_map.clone())
+      .headers(self.header_map.clone());
+
+    let raw_response = request
       .send()
-      .await?
-      .json::<GraphQLResponse<K>>()
       .await?;
 
-    Ok(response.data)
+    let json_response = raw_response
+      .json::<GraphQLResponse<K>>()
+      .await;
+
+    // Check weather JSON is parsed successfully
+    match json_response {
+      Ok(json) => {
+        // Check if error messages have been received
+        if json.errors.is_some() {
+          return Err(GraphQLError::from_json(json.errors.unwrap()))
+        }
+
+        Ok(json.data.unwrap())
+      },
+      Err(_e) => Err(
+        GraphQLError::from_str("Failed to parse JSON")
+      )
+    }
   }
 }
