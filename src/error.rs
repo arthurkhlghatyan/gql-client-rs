@@ -32,7 +32,7 @@ impl GraphQLError {
 
   pub fn from_json(json: Vec<GraphQLErrorMessage>) -> Self {
     Self {
-      message: String::from("Error occurred in query"),
+      message: String::from("Look at json field for more details"),
       json: Some(json),
     }
   }
@@ -47,14 +47,15 @@ impl GraphQLError {
 }
 
 fn format(err: &GraphQLError, f: &mut Formatter<'_>) -> fmt::Result {
-  // Print the message and exit
+  // Print the main error message
+  writeln!(f, "\nGQLClient Error: {}", err.message)?;
+
+  // Check if query errors have been received
   if err.json.is_none() {
-    return writeln!(f, "\nGQLClient Error {}", err.message);
+    return Ok(());
   }
 
   let errors = err.json.as_ref();
-
-  writeln!(f, "\nGQLClient Error: Look at json field for more details")?;
 
   for err in errors.unwrap() {
     writeln!(f, "Message: {}", err.message)?;

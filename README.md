@@ -58,7 +58,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
  ```
 
 
- # Passing HTTP headers
+# Passing HTTP headers
 
  Client exposes new_with_headers function to pass headers using simple HashMap<&str, &str>
 
