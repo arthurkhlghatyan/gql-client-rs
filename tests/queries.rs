@@ -37,7 +37,7 @@ pub async fn fetches_one_post() {
   let query = r#"
     query SinglePostQuery($id: ID!) {
       post(id: $id) {
-        id
+        id1
       }
     }
   "#;
