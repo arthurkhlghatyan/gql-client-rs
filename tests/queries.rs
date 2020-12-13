@@ -1,31 +1,8 @@
+mod structs;
+
+use crate::structs::{inputs::SinglePostVariables, AllPosts, SinglePost};
 use gql_client::Client;
-use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
-
-#[derive(Deserialize, Debug)]
-struct NodeList<T> {
-  data: Vec<T>,
-}
-
-#[derive(Deserialize, Debug)]
-struct Post {
-  id: String,
-}
-
-#[derive(Deserialize, Debug)]
-struct SinglePost {
-  post: Post,
-}
-
-#[derive(Deserialize, Debug)]
-struct AllPosts {
-  posts: NodeList<Post>,
-}
-
-#[derive(Serialize, Debug)]
-struct SinglePostVariables {
-  id: u32,
-}
 
 // Initialize endpoint
 const ENDPOINT: &'static str = "https://graphqlzero.almansi.me/api";
@@ -70,5 +47,5 @@ pub async fn fetches_all_posts() {
 
   let data: AllPosts = client.query::<AllPosts>(query).await.unwrap();
 
-  assert!(data.posts.data.len() >= 0 as usize);
+  assert!(data.posts.data.len() > 0 as usize);
 }

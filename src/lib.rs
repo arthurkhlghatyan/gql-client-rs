@@ -10,45 +10,45 @@
 //! * There's also a wrapper client.query if there is no need to pass variables
 //!
 //! ```rust
-//! use gql_client::Client;
-//! use serde::{Deserialize, Serialize};
+//!use gql_client::Client;
+//!use serde::{Deserialize, Serialize};
 //!
-//! #[derive(Deserialize)]
-//! pub struct Data {
+//!#[derive(Deserialize)]
+//!pub struct Data {
 //!    user: User
-//! }
+//!}
 //!
-//! #[derive(Deserialize)]
-//! pub struct User {
-//!     id: String,
-//!     name: String
-//! }
+//!#[derive(Deserialize)]
+//!pub struct User {
+//!    id: String,
+//!    name: String
+//!}
 //!
-//! #[derive(Serialize)]
-//! pub struct Vars {
-//!     id: u32
-//! }
+//!#[derive(Serialize)]
+//!pub struct Vars {
+//!    id: u32
+//!}
 //!
-//! #[tokio::main]
-//! async fn main() -> Result<(), Box<dyn std::error::Error>> {
-//!     let endpoint = "https://graphqlzero.almansi.me/api";
-//!     let query = r#"
-//!         query UserByIdQuery($id: ID!) {
-//!             user(id: $id) {
-//!                 id
-//!                 name
-//!             }
-//!         }
-//!     "#;
+//!#[tokio::main]
+//!async fn main() -> Result<(), Box<dyn std::error::Error>> {
+//!    let endpoint = "https://graphqlzero.almansi.me/api";
+//!    let query = r#"
+//!        query UserByIdQuery($id: ID!) {
+//!            user(id: $id) {
+//!                id
+//!                name
+//!            }
+//!        }
+//!    "#;
 //!
-//!     let client = Client::new(endpoint);
-//!     let vars = Vars { id: 1 };
-//!     let data = client.query_with_vars::<Data, Vars>(query, vars).await.unwrap();
+//!    let client = Client::new(endpoint);
+//!    let vars = Vars { id: 1 };
+//!    let data = client.query_with_vars::<Data, Vars>(query, vars).await.unwrap();
 //!
-//!     println!("Id: {}, Name: {}", data.user.id, data.user.name);
+//!    println!("Id: {}, Name: {}", data.user.id, data.user.name);
 //!
-//!     Ok(())
-//! }
+//!    Ok(())
+//!}
 //! ```
 //!
 //!
@@ -72,9 +72,60 @@
 //!    Ok(())
 //!}
 //! ```
+//!
+//! # Error handling
+//! There are two types of errors that can possibly occur. HTTP related errors (for example, authentication problem)
+//! or GraphQL query errors in JSON response.
+//! Debug, Display implementation of GraphQLError struct properly displays those error messages.
+//! Additionally, you can also look at JSON content for more detailed output by calling err.json()
+//!
+//! ```rust
+//!use gql_client::Client;
+//!use serde::{Deserialize, Serialize};
+//!
+//!#[derive(Deserialize)]
+//!pub struct Data {
+//!    user: User
+//!}
+//!
+//!#[derive(Deserialize)]
+//!pub struct User {
+//!    id: String,
+//!    name: String
+//!}
+//!
+//!#[derive(Serialize)]
+//!pub struct Vars {
+//!    id: u32
+//!}
+//!
+//!#[tokio::main]
+//!async fn main() -> Result<(), Box<dyn std::error::Error>> {
+//!    let endpoint = "https://graphqlzero.almansi.me/api";
+//!
+//!    // Send incorrect request
+//!    let query = r#"
+//!        query UserByIdQuery($id: ID!) {
+//!            user(id: $id) {
+//!                id1
+//!                name
+//!            }
+//!        }
+//!    "#;
+//!
+//!    let client = Client::new(endpoint);
+//!    let vars = Vars { id: 1 };
+//!    let error = client.query_with_vars::<Data, Vars>(query, vars).await.err();
+//!
+//!    println!("{:?}", error);
+//!
+//!    Ok(())
+//!}
+//! ```
 
 mod client;
 mod error;
 
 pub use client::GQLClient as Client;
 pub use error::GraphQLError;
+pub use error::GraphQLErrorMessage;
