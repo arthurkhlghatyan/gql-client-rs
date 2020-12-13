@@ -1,7 +1,7 @@
 mod structs;
 
+use crate::structs::{inputs::SinglePostVariables, SinglePost};
 use gql_client::Client;
-use crate::structs::{SinglePost, inputs::SinglePostVariables};
 
 // Initialize endpoint
 const ENDPOINT: &'static str = "https://graphqlzero.almansi.me/api";
@@ -28,4 +28,3 @@ pub async fn properly_parses_json_errors() {
   assert_eq!(errors.is_some(), true);
   assert!(errors.unwrap().json().as_ref().unwrap().len() > 0 as usize);
 }
-

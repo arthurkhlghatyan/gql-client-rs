@@ -7,14 +7,14 @@ use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::str::FromStr;
 
-pub struct GQLClient {
-  endpoint: &'static str,
+pub struct GQLClient<'a> {
+  endpoint: &'a str,
   header_map: HeaderMap,
 }
 
 #[derive(Serialize)]
-struct RequestBody<T: Serialize> {
-  query: &'static str,
+struct RequestBody<'a, T: Serialize> {
+  query: &'a str,
   variables: T,
 }
 
@@ -24,15 +24,15 @@ struct GraphQLResponse<T> {
   errors: Option<Vec<GraphQLErrorMessage>>,
 }
 
-impl GQLClient {
-  pub fn new(endpoint: &'static str) -> Self {
+impl<'a> GQLClient<'a> {
+  pub fn new(endpoint: &'a str) -> Self {
     Self {
       endpoint,
       header_map: HeaderMap::new(),
     }
   }
 
-  pub fn new_with_headers(endpoint: &'static str, headers: HashMap<&str, &str>) -> Self {
+  pub fn new_with_headers(endpoint: &'a str, headers: HashMap<&str, &str>) -> Self {
     let mut header_map = HeaderMap::new();
 
     for (str_key, str_value) in headers {
@@ -48,7 +48,7 @@ impl GQLClient {
     }
   }
 
-  pub async fn query<K>(&self, query: &'static str) -> Result<K, GraphQLError>
+  pub async fn query<K>(&self, query: &'a str) -> Result<K, GraphQLError>
   where
     K: for<'de> Deserialize<'de>,
   {
@@ -57,7 +57,7 @@ impl GQLClient {
 
   pub async fn query_with_vars<K, T: Serialize>(
     &self,
-    query: &'static str,
+    query: &'a str,
     variables: T,
   ) -> Result<K, GraphQLError>
   where
@@ -72,7 +72,6 @@ impl GQLClient {
       .headers(self.header_map.clone());
 
     let raw_response = request.send().await?;
-
     let json_response = raw_response.json::<GraphQLResponse<K>>().await;
 
     // Check weather JSON is parsed successfully
@@ -85,7 +84,7 @@ impl GQLClient {
 
         Ok(json.data.unwrap())
       }
-      Err(_e) => Err(GraphQLError::from_str("Failed to parse JSON")),
+      Err(_e) => Err(GraphQLError::from_str("Failed to parse response")),
     }
   }
 }

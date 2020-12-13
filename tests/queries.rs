@@ -1,8 +1,8 @@
 mod structs;
 
-use std::collections::HashMap;
+use crate::structs::{inputs::SinglePostVariables, AllPosts, SinglePost};
 use gql_client::Client;
-use crate::structs::{SinglePost, AllPosts, inputs::SinglePostVariables };
+use std::collections::HashMap;
 
 // Initialize endpoint
 const ENDPOINT: &'static str = "https://graphqlzero.almansi.me/api";
