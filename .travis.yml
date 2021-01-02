@@ -14,3 +14,10 @@ cache: cargo
 script:
   - cargo build --verbose
   - cargo test --verbose
+matrix:
+  include:
+    - language: rust
+      rust: stable
+      name: "check wasm32 support"
+      install: rustup target add wasm32-unknown-unknown
+      script: cargo check --target wasm32-unknown-unknown

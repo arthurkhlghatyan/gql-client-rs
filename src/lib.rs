@@ -3,6 +3,7 @@
 //!
 //! * Simple API, supports queries and mutations
 //! * Does not require schema file for introspection
+//! * Supports WebAssembly
 //!
 //! # Basic Usage
 //!
