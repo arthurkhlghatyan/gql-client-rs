@@ -3,6 +3,21 @@
 
 Project Changelog. Starts from version 0.2.1
 
+## [1.0.0] - 2021-06-01
+
+Release V1
+
+### Added
+
+- Configured CI to ensure WebAssembly support
+- Added missing path property GraphQLErrorMessage struct
+- Upgrade tokio to v1.0 in dev dependencies
+- Upgrade reqwest to v0.11
+
+### Changed
+
+- Made location, extensions fields optional in GraphQLErrorMessage struct
+
 ## [0.2.1] - 2020-12-13
 
 Added proper error reporting.
