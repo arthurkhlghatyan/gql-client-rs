@@ -5,22 +5,22 @@ rust:
 - nightly
 deploy:
   provider: cargo
-  token:
-    secure: S+/ty+q8HJG62p3XOJY8FsuaF/b2ijykk6djy2ilms5Jmqeku5LH2RP2/4jugLvX9sQ1x7a8hVwvw1Jrl/ebQiv33/iDhoewIsaxkz2FzvLd/SUpKAY2Y53uKMCTR+LPqAYTfoDi3wFF6ISJIBBkdQdC99kzcKtw4U2D33p7JrZquYtPfwbvkojTc7Ns2ATEG6SRiai3R5oXiXAiNHIo6MrkZmfXzO0lucIEQIzrcUm/7V8E20bCTp8zw8+cuQq1OQYzKFcUZc3cJHjYJRtOHnvmjYw3VCqzTjeFnlbMVVf6YuJ0dOtSGl8kiT+liLV4pZ3g/BZoc5O34GRBCROp80agIHNWGkY1aLh58gkRxObdd7m8wE/61FirJ79Y94GHvBJa8nB1l5Vq7l6wOvus99YlEl36JL/08I+cZotlTWYOK57Dq2dCnnxrWZnDNlWxrA0/ldgFoO8BVwn2WlrL/7cBQGIYqTUw5q3L2Ahq6KYW1PjSjBGvkVLj0nZz3l1iTf5DqoCXkuIy4yWjlbLLNqWRJZnymmjOO12X/glyCEbtIWhbTKxYGYdVFpNbUVzILY6igUWA4OVxZSwguP6H4ubiITIzmdzBmCkD0kImQsN8FSRxvfH1Qjear4QWgcIp3HstxaSWs/TKu1QaMmfOtnUmE5ufhXaRH8XIM+30sWI=
+  skip_cleanup: true
   on:
     branch: master
+  token:
+    secure: KM+CYq7/iCZ53oQjiLU60zqbcKzEM/zm22MOlCPizkYiDFrjbkDcluPYPVnvZWeWDUNbWX6H2AwFifwsY7TP4QzmS3F8aQWsvPanqr8Ztj8zbaZdOrGN7NDxhGh+t2kMJE2DarGHz9IU0+jXjYBK2zwdXOY4urn4Zuqz3G+CMERPDfF62Irzpht6qK+Q1d/hbw09h4QM2Oqu3+MnuhQUfn+Qsieqv6N3KODpHRLYsa18ddh+XNzhgES9obmfmdcpKn0GNtGggigBVgCsSWZv+gkz4ei9CqtG9LS+AD5Uz6GwNTRCjmHBZvGKu8vtSuU1lPuTUFaF6mH+s42dzyQU7dZtUBFVW4leB51GlXl/Rdv/Y5XPAFid50+DRcH8P1ax5SaLAeT4T8TISQcJHtIlruCwp4khufBsz8+Kkv7UeMfeM2EcigQFU3K9sFYMY+ebYfnteoCQQ2JXwj1CJ2f3m4vuBAD4aV3M3BsplyX0Ycvo/SqiMeWDoakVBp7yjSTyb/UvbPeHkD93EoyzRgNO7HziTq1ioNF204USw2NbxnZRFQqGEo6/wXboOhEKwChr5Swoa8OJkH3b0sOh82SwjHzVGZOXr7Mw9vGSxNp3tw+d6xI1tciWVvshdygvX0ubuDF7kke9qHqQ9jtiwAYFFSVsedZ9lEsk+N9ntQ1cq4g=
 branches:
   only:
   - master
-jobs:
-  allow_failures:
-  - rust: nightly
-  fast_finish: true
 cache: cargo
 script:
 - cargo build --verbose
 - cargo test --verbose
 matrix:
+  allow_failures:
+  - rust: nightly
+  fast_finish: true
   include:
   - language: rust
     rust: stable
