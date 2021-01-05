@@ -1,16 +1,29 @@
 language: rust
 rust:
-  - stable
-  - beta
-  - nightly
+- stable
+- beta
+- nightly
+deploy:
+  provider: cargo
+  token:
+    secure: S+/ty+q8HJG62p3XOJY8FsuaF/b2ijykk6djy2ilms5Jmqeku5LH2RP2/4jugLvX9sQ1x7a8hVwvw1Jrl/ebQiv33/iDhoewIsaxkz2FzvLd/SUpKAY2Y53uKMCTR+LPqAYTfoDi3wFF6ISJIBBkdQdC99kzcKtw4U2D33p7JrZquYtPfwbvkojTc7Ns2ATEG6SRiai3R5oXiXAiNHIo6MrkZmfXzO0lucIEQIzrcUm/7V8E20bCTp8zw8+cuQq1OQYzKFcUZc3cJHjYJRtOHnvmjYw3VCqzTjeFnlbMVVf6YuJ0dOtSGl8kiT+liLV4pZ3g/BZoc5O34GRBCROp80agIHNWGkY1aLh58gkRxObdd7m8wE/61FirJ79Y94GHvBJa8nB1l5Vq7l6wOvus99YlEl36JL/08I+cZotlTWYOK57Dq2dCnnxrWZnDNlWxrA0/ldgFoO8BVwn2WlrL/7cBQGIYqTUw5q3L2Ahq6KYW1PjSjBGvkVLj0nZz3l1iTf5DqoCXkuIy4yWjlbLLNqWRJZnymmjOO12X/glyCEbtIWhbTKxYGYdVFpNbUVzILY6igUWA4OVxZSwguP6H4ubiITIzmdzBmCkD0kImQsN8FSRxvfH1Qjear4QWgcIp3HstxaSWs/TKu1QaMmfOtnUmE5ufhXaRH8XIM+30sWI=
+  on:
+    branch: master
 branches:
   only:
-    - master
+  - master
 jobs:
   allow_failures:
-    - rust: nightly
+  - rust: nightly
   fast_finish: true
 cache: cargo
 script:
-  - cargo build --verbose
-  - cargo test --verbose
+- cargo build --verbose
+- cargo test --verbose
+matrix:
+  include:
+  - language: rust
+    rust: stable
+    name: check wasm32 support
+    install: rustup target add wasm32-unknown-unknown
+    script: cargo check --target wasm32-unknown-unknown

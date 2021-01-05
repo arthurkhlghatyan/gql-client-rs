@@ -74,7 +74,7 @@ impl<'a> GQLClient<'a> {
     let raw_response = request.send().await?;
     let json_response = raw_response.json::<GraphQLResponse<K>>().await;
 
-    // Check weather JSON is parsed successfully
+    // Check whether JSON is parsed successfully
     match json_response {
       Ok(json) => {
         // Check if error messages have been received
