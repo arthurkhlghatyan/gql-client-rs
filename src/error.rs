@@ -14,7 +14,7 @@ pub struct GraphQLErrorMessage {
   message: String,
   locations: Option<Vec<GraphQLErrorLocation>>,
   extensions: Option<HashMap<String, String>>,
-  path: Option<Vec<GraphQLErrorPathParam>>
+  path: Option<Vec<GraphQLErrorPathParam>>,
 }
 
 #[derive(Deserialize, Debug)]
@@ -27,7 +27,7 @@ pub struct GraphQLErrorLocation {
 #[serde(untagged)]
 pub enum GraphQLErrorPathParam {
   String(String),
-  Number(u32)
+  Number(u32),
 }
 
 impl GraphQLError {
