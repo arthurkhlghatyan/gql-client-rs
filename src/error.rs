@@ -1,5 +1,6 @@
 use reqwest::Error;
-use serde::{export::Formatter, Deserialize};
+use serde::Deserialize;
+use std::fmt::Formatter;
 use std::collections::HashMap;
 use std::fmt;
 
