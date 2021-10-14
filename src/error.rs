@@ -1,7 +1,7 @@
 use reqwest::Error;
-use serde::{export::Formatter, Deserialize};
+use serde::Deserialize;
 use std::collections::HashMap;
-use std::fmt;
+use std::fmt::{self, Formatter};
 
 pub struct GraphQLError {
   message: String,

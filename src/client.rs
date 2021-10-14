@@ -1,20 +1,22 @@
-use crate::error::{GraphQLError, GraphQLErrorMessage};
+use std::collections::HashMap;
+use std::str::FromStr;
+
 use reqwest::{
   header::{HeaderMap, HeaderName, HeaderValue},
   Client,
 };
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
-use std::str::FromStr;
 
-pub struct GQLClient<'a> {
-  endpoint: &'a str,
+use crate::error::{GraphQLError, GraphQLErrorMessage};
+
+pub struct GQLClient {
+  endpoint: String,
   header_map: HeaderMap,
 }
 
 #[derive(Serialize)]
-struct RequestBody<'a, T: Serialize> {
-  query: &'a str,
+struct RequestBody<T: Serialize> {
+  query: String,
   variables: T,
 }
 
@@ -24,15 +26,15 @@ struct GraphQLResponse<T> {
   errors: Option<Vec<GraphQLErrorMessage>>,
 }
 
-impl<'a> GQLClient<'a> {
-  pub fn new(endpoint: &'a str) -> Self {
+impl GQLClient {
+  pub fn new(endpoint: impl AsRef<str>) -> Self {
     Self {
-      endpoint,
+      endpoint: endpoint.as_ref().to_string(),
       header_map: HeaderMap::new(),
     }
   }
 
-  pub fn new_with_headers(endpoint: &'a str, headers: HashMap<&str, &str>) -> Self {
+  pub fn new_with_headers(endpoint: impl AsRef<str>, headers: HashMap<&str, &str>) -> Self {
     let mut header_map = HeaderMap::new();
 
     for (str_key, str_value) in headers {
@@ -43,12 +45,12 @@ impl<'a> GQLClient<'a> {
     }
 
     Self {
-      endpoint,
+      endpoint: endpoint.as_ref().to_string(),
       header_map,
     }
   }
 
-  pub async fn query<K>(&self, query: &'a str) -> Result<K, GraphQLError>
+  pub async fn query<K>(&self, query: &str) -> Result<K, GraphQLError>
   where
     K: for<'de> Deserialize<'de>,
   {
@@ -57,17 +59,20 @@ impl<'a> GQLClient<'a> {
 
   pub async fn query_with_vars<K, T: Serialize>(
     &self,
-    query: &'a str,
+    query: &str,
     variables: T,
   ) -> Result<K, GraphQLError>
   where
     K: for<'de> Deserialize<'de>,
   {
     let client = Client::new();
-    let body = RequestBody { query, variables };
+    let body = RequestBody {
+      query: query.to_string(),
+      variables,
+    };
 
     let request = client
-      .post(self.endpoint)
+      .post(&self.endpoint)
       .json(&body)
       .headers(self.header_map.clone());
 
