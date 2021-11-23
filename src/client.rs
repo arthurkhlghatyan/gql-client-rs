@@ -65,7 +65,10 @@ impl GQLClient {
   where
     K: for<'de> Deserialize<'de>,
   {
-    let client = Client::new();
+    let client = Client::builder()
+      .timeout(std::time::Duration::from_secs(5))
+      .build()
+      .map_err(|e| GraphQLError::from_str(format!("Can not create client: {:?}", e)))?;
     let body = RequestBody {
       query: query.to_string(),
       variables,

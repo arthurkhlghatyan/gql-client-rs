@@ -31,9 +31,9 @@ pub enum GraphQLErrorPathParam {
 }
 
 impl GraphQLError {
-  pub fn from_str(message: &str) -> Self {
+  pub fn from_str(message: impl AsRef<str>) -> Self {
     Self {
-      message: String::from(message),
+      message: message.as_ref().to_string(),
       json: None,
     }
   }
