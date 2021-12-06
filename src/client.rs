@@ -9,6 +9,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::error::{GraphQLError, GraphQLErrorMessage};
 
+#[derive(Clone, Debug)]
 pub struct GQLClient {
   endpoint: String,
   header_map: HeaderMap,
