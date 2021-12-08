@@ -116,7 +116,10 @@ impl GQLClient {
 
         Ok(json.data)
       }
-      Err(_e) => Err(GraphQLError::from_str("Failed to parse response")),
+      Err(e) => Err(GraphQLError::from_str(format!(
+        "Failed to parse response: {:?}",
+        e
+      ))),
     }
   }
 }
