@@ -51,18 +51,41 @@ impl GQLClient {
     }
   }
 
-  pub async fn query<K>(&self, query: &str) -> Result<K, GraphQLError>
+  pub async fn query<K>(&self, query: &str) -> Result<Option<K>, GraphQLError>
   where
     K: for<'de> Deserialize<'de>,
   {
     self.query_with_vars::<K, ()>(query, ()).await
   }
 
-  pub async fn query_with_vars<K, T: Serialize>(
+  pub async fn query_unwrap<K>(&self, query: &str) -> Result<K, GraphQLError>
+  where
+    K: for<'de> Deserialize<'de>,
+  {
+    self.query_with_vars_unwrap::<K, ()>(query, ()).await
+  }
+
+  pub async fn query_with_vars_unwrap<K, T: Serialize>(
     &self,
     query: &str,
     variables: T,
   ) -> Result<K, GraphQLError>
+  where
+    K: for<'de> Deserialize<'de>,
+  {
+    match self.query_with_vars(query, variables).await? {
+      Some(v) => Ok(v),
+      None => Err(GraphQLError::from_str(
+        "No data from graphql server for this query",
+      )),
+    }
+  }
+
+  pub async fn query_with_vars<K, T: Serialize>(
+    &self,
+    query: &str,
+    variables: T,
+  ) -> Result<Option<K>, GraphQLError>
   where
     K: for<'de> Deserialize<'de>,
   {
@@ -88,10 +111,10 @@ impl GQLClient {
       Ok(json) => {
         // Check if error messages have been received
         if json.errors.is_some() {
-          return Err(GraphQLError::from_json(json.errors.unwrap()));
+          return Err(GraphQLError::from_json(json.errors.unwrap_or_default()));
         }
 
-        Ok(json.data.unwrap())
+        Ok(json.data)
       }
       Err(_e) => Err(GraphQLError::from_str("Failed to parse response")),
     }
