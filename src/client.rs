@@ -104,19 +104,23 @@ impl GQLClient {
       .headers(self.header_map.clone());
 
     let raw_response = request.send().await?;
-    let json_response = raw_response.json::<GraphQLResponse<K>>().await;
+    let response_body_text = raw_response
+      .text()
+      .await
+      .map_err(|e| GraphQLError::from_str(format!("Can not get response: {:?}", e)))?;
 
-    // Check whether JSON is parsed successfully
-    match json_response {
-      Ok(json) => {
-        // Check if error messages have been received
-        if json.errors.is_some() {
-          return Err(GraphQLError::from_json(json.errors.unwrap_or_default()));
-        }
+    let json: GraphQLResponse<K> = serde_json::from_str(&response_body_text).map_err(|e| {
+      GraphQLError::from_str(format!(
+        "Failed to parse response: {:?}. The response body is: {}",
+        e, response_body_text
+      ))
+    })?;
 
-        Ok(json.data)
-      }
-      Err(_e) => Err(GraphQLError::from_str("Failed to parse response")),
+    // Check if error messages have been received
+    if json.errors.is_some() {
+      return Err(GraphQLError::from_json(json.errors.unwrap_or_default()));
     }
+
+    Ok(json.data)
   }
 }
