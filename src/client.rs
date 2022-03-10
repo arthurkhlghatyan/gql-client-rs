@@ -75,10 +75,25 @@ impl GQLClient {
   {
     match self.query_with_vars(query, variables).await? {
       Some(v) => Ok(v),
-      None => Err(GraphQLError::from_str(
+      None => Err(GraphQLError::with_text(
         "No data from graphql server for this query",
       )),
     }
+  }
+
+  #[cfg(target_arch = "wasm32")]
+  fn client(&self) -> Result<reqwest::Client, GraphQLError> {
+    Ok(Client::new())
+  }
+
+  #[cfg(not(target_arch = "wasm32"))]
+  fn client(&self) -> Result<reqwest::Client, GraphQLError> {
+    Ok(
+      Client::builder()
+        .timeout(std::time::Duration::from_secs(5))
+        .build()
+        .map_err(|e| GraphQLError::with_text(format!("Can not create client: {:?}", e)))?,
+    )
   }
 
   pub async fn query_with_vars<K, T: Serialize>(
@@ -89,10 +104,7 @@ impl GQLClient {
   where
     K: for<'de> Deserialize<'de>,
   {
-    let client = Client::builder()
-      .timeout(std::time::Duration::from_secs(5))
-      .build()
-      .map_err(|e| GraphQLError::from_str(format!("Can not create client: {:?}", e)))?;
+    let client: reqwest::Client = self.client()?;
     let body = RequestBody {
       query: query.to_string(),
       variables,
@@ -107,10 +119,10 @@ impl GQLClient {
     let response_body_text = raw_response
       .text()
       .await
-      .map_err(|e| GraphQLError::from_str(format!("Can not get response: {:?}", e)))?;
+      .map_err(|e| GraphQLError::with_text(format!("Can not get response: {:?}", e)))?;
 
     let json: GraphQLResponse<K> = serde_json::from_str(&response_body_text).map_err(|e| {
-      GraphQLError::from_str(format!(
+      GraphQLError::with_text(format!(
         "Failed to parse response: {:?}. The response body is: {}",
         e, response_body_text
       ))
@@ -118,7 +130,7 @@ impl GQLClient {
 
     // Check if error messages have been received
     if json.errors.is_some() {
-      return Err(GraphQLError::from_json(json.errors.unwrap_or_default()));
+      return Err(GraphQLError::with_json(json.errors.unwrap_or_default()));
     }
 
     Ok(json.data)

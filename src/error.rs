@@ -10,6 +10,7 @@ pub struct GraphQLError {
 
 // https://spec.graphql.org/June2018/#sec-Errors
 #[derive(Deserialize, Debug)]
+#[allow(dead_code)]
 pub struct GraphQLErrorMessage {
   message: String,
   locations: Option<Vec<GraphQLErrorLocation>>,
@@ -18,6 +19,7 @@ pub struct GraphQLErrorMessage {
 }
 
 #[derive(Deserialize, Debug)]
+#[allow(dead_code)]
 pub struct GraphQLErrorLocation {
   line: u32,
   column: u32,
@@ -31,14 +33,14 @@ pub enum GraphQLErrorPathParam {
 }
 
 impl GraphQLError {
-  pub fn from_str(message: impl AsRef<str>) -> Self {
+  pub fn with_text(message: impl AsRef<str>) -> Self {
     Self {
       message: message.as_ref().to_string(),
       json: None,
     }
   }
 
-  pub fn from_json(json: Vec<GraphQLErrorMessage>) -> Self {
+  pub fn with_json(json: Vec<GraphQLErrorMessage>) -> Self {
     Self {
       message: String::from("Look at json field for more details"),
       json: Some(json),
@@ -79,6 +81,7 @@ impl fmt::Display for GraphQLError {
 }
 
 impl fmt::Debug for GraphQLError {
+  #[allow(clippy::needless_borrow)]
   fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
     format(&self, f)
   }
