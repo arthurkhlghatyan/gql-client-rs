@@ -1,20 +1,23 @@
-use crate::error::{GraphQLError, GraphQLErrorMessage};
+use std::collections::HashMap;
+use std::str::FromStr;
+
 use reqwest::{
   header::{HeaderMap, HeaderName, HeaderValue},
   Client,
 };
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
-use std::str::FromStr;
 
-pub struct GQLClient<'a> {
-  endpoint: &'a str,
+use crate::error::{GraphQLError, GraphQLErrorMessage};
+
+#[derive(Clone, Debug)]
+pub struct GQLClient {
+  endpoint: String,
   header_map: HeaderMap,
 }
 
 #[derive(Serialize)]
-struct RequestBody<'a, T: Serialize> {
-  query: &'a str,
+struct RequestBody<T: Serialize> {
+  query: String,
   variables: T,
 }
 
@@ -24,15 +27,32 @@ struct GraphQLResponse<T> {
   errors: Option<Vec<GraphQLErrorMessage>>,
 }
 
-impl<'a> GQLClient<'a> {
-  pub fn new(endpoint: &'a str) -> Self {
+impl GQLClient {
+  #[cfg(target_arch = "wasm32")]
+  fn client(&self) -> Result<reqwest::Client, GraphQLError> {
+    Ok(Client::new())
+  }
+
+  #[cfg(not(target_arch = "wasm32"))]
+  fn client(&self) -> Result<reqwest::Client, GraphQLError> {
+    Ok(
+      Client::builder()
+        .timeout(std::time::Duration::from_secs(5))
+        .build()
+        .map_err(|e| GraphQLError::with_text(format!("Can not create client: {:?}", e)))?,
+    )
+  }
+}
+
+impl GQLClient {
+  pub fn new(endpoint: impl AsRef<str>) -> Self {
     Self {
-      endpoint,
+      endpoint: endpoint.as_ref().to_string(),
       header_map: HeaderMap::new(),
     }
   }
 
-  pub fn new_with_headers(endpoint: &'a str, headers: HashMap<&str, &str>) -> Self {
+  pub fn new_with_headers(endpoint: impl AsRef<str>, headers: HashMap<&str, &str>) -> Self {
     let mut header_map = HeaderMap::new();
 
     for (str_key, str_value) in headers {
@@ -43,48 +63,78 @@ impl<'a> GQLClient<'a> {
     }
 
     Self {
-      endpoint,
+      endpoint: endpoint.as_ref().to_string(),
       header_map,
     }
   }
 
-  pub async fn query<K>(&self, query: &'a str) -> Result<K, GraphQLError>
+  pub async fn query<K>(&self, query: &str) -> Result<Option<K>, GraphQLError>
   where
     K: for<'de> Deserialize<'de>,
   {
     self.query_with_vars::<K, ()>(query, ()).await
   }
 
-  pub async fn query_with_vars<K, T: Serialize>(
+  pub async fn query_unwrap<K>(&self, query: &str) -> Result<K, GraphQLError>
+  where
+    K: for<'de> Deserialize<'de>,
+  {
+    self.query_with_vars_unwrap::<K, ()>(query, ()).await
+  }
+
+  pub async fn query_with_vars_unwrap<K, T: Serialize>(
     &self,
-    query: &'a str,
+    query: &str,
     variables: T,
   ) -> Result<K, GraphQLError>
   where
     K: for<'de> Deserialize<'de>,
   {
-    let client = Client::new();
-    let body = RequestBody { query, variables };
+    match self.query_with_vars(query, variables).await? {
+      Some(v) => Ok(v),
+      None => Err(GraphQLError::with_text(
+        "No data from graphql server for this query",
+      )),
+    }
+  }
+
+  pub async fn query_with_vars<K, T: Serialize>(
+    &self,
+    query: &str,
+    variables: T,
+  ) -> Result<Option<K>, GraphQLError>
+  where
+    K: for<'de> Deserialize<'de>,
+  {
+    let client: reqwest::Client = self.client()?;
+    let body = RequestBody {
+      query: query.to_string(),
+      variables,
+    };
 
     let request = client
-      .post(self.endpoint)
+      .post(&self.endpoint)
       .json(&body)
       .headers(self.header_map.clone());
 
     let raw_response = request.send().await?;
-    let json_response = raw_response.json::<GraphQLResponse<K>>().await;
+    let response_body_text = raw_response
+      .text()
+      .await
+      .map_err(|e| GraphQLError::with_text(format!("Can not get response: {:?}", e)))?;
 
-    // Check whether JSON is parsed successfully
-    match json_response {
-      Ok(json) => {
-        // Check if error messages have been received
-        if json.errors.is_some() {
-          return Err(GraphQLError::from_json(json.errors.unwrap()));
-        }
+    let json: GraphQLResponse<K> = serde_json::from_str(&response_body_text).map_err(|e| {
+      GraphQLError::with_text(format!(
+        "Failed to parse response: {:?}. The response body is: {}",
+        e, response_body_text
+      ))
+    })?;
 
-        Ok(json.data.unwrap())
-      }
-      Err(_e) => Err(GraphQLError::from_str("Failed to parse response")),
+    // Check if error messages have been received
+    if json.errors.is_some() {
+      return Err(GraphQLError::with_json(json.errors.unwrap_or_default()));
     }
+
+    Ok(json.data)
   }
 }
