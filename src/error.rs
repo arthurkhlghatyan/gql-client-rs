@@ -1,7 +1,9 @@
 use reqwest::Error;
-use serde::{export::Formatter, Deserialize};
-use std::collections::HashMap;
-use std::fmt;
+use serde::Deserialize;
+use std::{
+    collections::HashMap,
+    fmt::{self, Formatter}
+};
 
 pub struct GraphQLError {
   message: String,
@@ -79,7 +81,7 @@ impl fmt::Display for GraphQLError {
 }
 
 impl fmt::Debug for GraphQLError {
-  fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+  fn fmt(&self, f: &mut Formatter) -> fmt::Result {
     format(&self, f)
   }
 }
