@@ -1,6 +1,6 @@
 [package]
 name = "gql_client"
-version = "1.0.0"
+version = "1.0.1"
 authors = ["Arthur Khlghatyan <arthur.khlghatyan@gmail.com>"]
 edition = "2018"
 description = "Minimal GraphQL client for Rust"
@@ -16,7 +16,11 @@ maintenance = { status = "actively-developed" }
 
 [dependencies]
 serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
 reqwest = { version = "0.11", features = ["json"] }
 
 [dev-dependencies]
 tokio = { version = "1", features = ["full"] }
+
+[features]
+blocking = ["reqwest/blocking"]

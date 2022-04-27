@@ -21,7 +21,7 @@ pub async fn properly_parses_json_errors() {
 
   let variables = SinglePostVariables { id: 2 };
   let errors = client
-    .query_with_vars::<SinglePost, SinglePostVariables>(query, variables)
+    .query_with_vars_unwrap::<SinglePost, SinglePostVariables>(query, variables)
     .await
     .err();
 

@@ -44,7 +44,7 @@
 //!
 //!    let client = Client::new(endpoint);
 //!    let vars = Vars { id: 1 };
-//!    let data = client.query_with_vars::<Data, Vars>(query, vars).await.unwrap();
+//!    let data = client.query_with_vars_unwrap::<Data, Vars>(query, vars).await.unwrap();
 //!
 //!    println!("Id: {}, Name: {}", data.user.id, data.user.name);
 //!
