@@ -56,7 +56,7 @@ impl <'a> GQLClient <'a> {
     Self {
       endpoint: &endpoint,
       client: if cfg!(target_arch = "wasm32") {
-        Client::new()
+        Client::builder().default_headers(header_map).build().unwrap()
       } else {
         Client::builder()
           .timeout(Duration::from_secs(5))
