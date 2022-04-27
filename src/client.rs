@@ -1,5 +1,5 @@
-use std::{collections::HashMap, str::FromStr, time::Duration};
 use reqwest::header::{HeaderMap, HeaderName, HeaderValue};
+use std::{collections::HashMap, str::FromStr, time::Duration};
 
 #[cfg(feature = "blocking")]
 use reqwest::blocking::Client;
@@ -11,7 +11,7 @@ use serde::{Deserialize, Serialize};
 use crate::error::{GraphQLError, GraphQLErrorMessage};
 
 #[derive(Clone, Debug)]
-pub struct GQLClient <'a> {
+pub struct GQLClient<'a> {
   endpoint: &'a str,
   client: Client,
 }
@@ -28,7 +28,7 @@ struct GraphQLResponse<T> {
   errors: Option<Vec<GraphQLErrorMessage>>,
 }
 
-impl <'a> GQLClient <'a> {
+impl<'a> GQLClient<'a> {
   pub fn new(endpoint: &'a str) -> Self {
     Self {
       endpoint: &endpoint,
@@ -56,7 +56,10 @@ impl <'a> GQLClient <'a> {
     Self {
       endpoint: &endpoint,
       client: if cfg!(target_arch = "wasm32") {
-        Client::builder().default_headers(header_map).build().unwrap()
+        Client::builder()
+          .default_headers(header_map)
+          .build()
+          .unwrap()
       } else {
         Client::builder()
           .timeout(Duration::from_secs(5))
@@ -67,15 +70,15 @@ impl <'a> GQLClient <'a> {
     }
   }
 
- #[cfg(not(feature = "blocking"))]
- pub async fn query<K>(&self, query: &'a str) -> Result<K, GraphQLError>
+  #[cfg(not(feature = "blocking"))]
+  pub async fn query<K>(&self, query: &'a str) -> Result<K, GraphQLError>
   where
     K: for<'de> Deserialize<'de>,
   {
     self.query_with_vars::<K, ()>(query, ()).await
   }
 
- #[cfg(not(feature = "blocking"))]
+  #[cfg(not(feature = "blocking"))]
   pub async fn query_with_vars<K, T: Serialize>(
     &self,
     query: &'a str,
@@ -86,9 +89,7 @@ impl <'a> GQLClient <'a> {
   {
     let body = RequestBody { query, variables };
 
-    let request = self.client
-      .post(self.endpoint)
-      .json(&body);
+    let request = self.client.post(self.endpoint).json(&body);
 
     let raw_response = request.send().await?;
     let json_response = raw_response.json::<GraphQLResponse<K>>().await;
@@ -107,15 +108,15 @@ impl <'a> GQLClient <'a> {
     }
   }
 
-#[cfg(feature = "blocking")]
- pub fn query<K>(&self, query: &'a str) -> Result<K, GraphQLError>
+  #[cfg(feature = "blocking")]
+  pub fn query<K>(&self, query: &'a str) -> Result<K, GraphQLError>
   where
     K: for<'de> Deserialize<'de>,
   {
     self.query_with_vars::<K, ()>(query, ())
   }
 
- #[cfg(feature = "blocking")]
+  #[cfg(feature = "blocking")]
   pub fn query_with_vars<K, T: Serialize>(
     &self,
     query: &'a str,
@@ -124,12 +125,9 @@ impl <'a> GQLClient <'a> {
   where
     K: for<'de> Deserialize<'de>,
   {
-    let client = Client::new();
     let body = RequestBody { query, variables };
 
-    let request = client
-      .post(self.endpoint)
-      .json(&body);
+    let request = self.client.post(self.endpoint).json(&body);
 
     let raw_response = request.send()?;
     let json_response = raw_response.json::<GraphQLResponse<K>>();

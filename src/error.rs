@@ -1,8 +1,8 @@
 use reqwest::Error;
 use serde::Deserialize;
 use std::{
-    collections::HashMap,
-    fmt::{self, Formatter}
+  collections::HashMap,
+  fmt::{self, Formatter},
 };
 
 pub struct GraphQLError {
