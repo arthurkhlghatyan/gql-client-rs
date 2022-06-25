@@ -92,9 +92,10 @@ impl GQLClient {
   {
     match self.query_with_vars(query, variables).await? {
       Some(v) => Ok(v),
-      None => Err(GraphQLError::with_text(
-        "No data from graphql server for this query",
-      )),
+      None => Err(GraphQLError::with_text(format!(
+        "No data from graphql server({}) for this query",
+        self.endpoint
+      ))),
     }
   }
 
@@ -118,10 +119,19 @@ impl GQLClient {
       .headers(self.header_map.clone());
 
     let raw_response = request.send().await?;
+    let status = raw_response.status();
     let response_body_text = raw_response
       .text()
       .await
       .map_err(|e| GraphQLError::with_text(format!("Can not get response: {:?}", e)))?;
+
+    if !status.is_success() {
+      return Err(GraphQLError::with_text(format!(
+        "The response is [{}]: {}",
+        status.as_u16(),
+        response_body_text
+      )));
+    }
 
     let json: GraphQLResponse<K> = serde_json::from_str(&response_body_text).map_err(|e| {
       GraphQLError::with_text(format!(
@@ -133,6 +143,9 @@ impl GQLClient {
     // Check if error messages have been received
     if json.errors.is_some() {
       return Err(GraphQLError::with_json(json.errors.unwrap_or_default()));
+    }
+    if json.data.is_none() {
+      log::warn!(target: "gql-client", "The deserialized data is none, the response is: {}", response_body_text);
     }
 
     Ok(json.data)
