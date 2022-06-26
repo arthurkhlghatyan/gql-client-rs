@@ -35,12 +35,10 @@ impl GQLClient {
 
   #[cfg(not(target_arch = "wasm32"))]
   fn client(&self) -> Result<reqwest::Client, GraphQLError> {
-    Ok(
-      Client::builder()
-        .timeout(std::time::Duration::from_secs(5))
-        .build()
-        .map_err(|e| GraphQLError::with_text(format!("Can not create client: {:?}", e)))?,
-    )
+    Client::builder()
+      .timeout(std::time::Duration::from_secs(5))
+      .build()
+      .map_err(|e| GraphQLError::with_text(format!("Can not create client: {:?}", e)))
   }
 }
 
@@ -92,9 +90,10 @@ impl GQLClient {
   {
     match self.query_with_vars(query, variables).await? {
       Some(v) => Ok(v),
-      None => Err(GraphQLError::with_text(
-        "No data from graphql server for this query",
-      )),
+      None => Err(GraphQLError::with_text(format!(
+        "No data from graphql server({}) for this query",
+        self.endpoint
+      ))),
     }
   }
 
@@ -118,6 +117,7 @@ impl GQLClient {
       .headers(self.header_map.clone());
 
     let raw_response = request.send().await?;
+    let status = raw_response.status();
     let response_body_text = raw_response
       .text()
       .await
@@ -130,9 +130,19 @@ impl GQLClient {
       ))
     })?;
 
+    if !status.is_success() {
+      return Err(GraphQLError::with_message_and_json(
+        format!("The response is [{}]", status.as_u16()),
+        json.errors.unwrap_or_default(),
+      ));
+    }
+
     // Check if error messages have been received
     if json.errors.is_some() {
       return Err(GraphQLError::with_json(json.errors.unwrap_or_default()));
+    }
+    if json.data.is_none() {
+      log::warn!(target: "gql-client", "The deserialized data is none, the response is: {}", response_body_text);
     }
 
     Ok(json.data)

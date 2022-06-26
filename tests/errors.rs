@@ -26,5 +26,7 @@ pub async fn properly_parses_json_errors() {
     .err();
 
   assert_eq!(errors.is_some(), true);
-  assert!(errors.unwrap().json().as_ref().unwrap().len() > 0 as usize);
+  let err_data = errors.unwrap();
+  let err_json = err_data.json().map(|v| v.len()).unwrap_or_default();
+  assert!(err_json > 0usize);
 }

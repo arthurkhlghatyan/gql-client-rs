@@ -22,7 +22,7 @@ jobs:
         run: cargo clippy --all -- -D warnings
 
   cargo-test:
-    run: Cargo test
+    name: Cargo test std
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
@@ -37,7 +37,7 @@ jobs:
         run: cargo test
 
   check-wasm32:
-    run: Cargo test
+    name: Cargo test wasm32
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
