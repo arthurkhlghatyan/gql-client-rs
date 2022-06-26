@@ -35,12 +35,10 @@ impl GQLClient {
 
   #[cfg(not(target_arch = "wasm32"))]
   fn client(&self) -> Result<reqwest::Client, GraphQLError> {
-    Ok(
-      Client::builder()
-        .timeout(std::time::Duration::from_secs(5))
-        .build()
-        .map_err(|e| GraphQLError::with_text(format!("Can not create client: {:?}", e)))?,
-    )
+    Client::builder()
+      .timeout(std::time::Duration::from_secs(5))
+      .build()
+      .map_err(|e| GraphQLError::with_text(format!("Can not create client: {:?}", e)))
   }
 }
 
@@ -125,20 +123,19 @@ impl GQLClient {
       .await
       .map_err(|e| GraphQLError::with_text(format!("Can not get response: {:?}", e)))?;
 
-    if !status.is_success() {
-      return Err(GraphQLError::with_text(format!(
-        "The response is [{}]: {}",
-        status.as_u16(),
-        response_body_text
-      )));
-    }
-
     let json: GraphQLResponse<K> = serde_json::from_str(&response_body_text).map_err(|e| {
       GraphQLError::with_text(format!(
         "Failed to parse response: {:?}. The response body is: {}",
         e, response_body_text
       ))
     })?;
+
+    if !status.is_success() {
+      return Err(GraphQLError::with_message_and_json(
+        format!("The response is [{}]", status.as_u16()),
+        json.errors.unwrap_or_default(),
+      ));
+    }
 
     // Check if error messages have been received
     if json.errors.is_some() {

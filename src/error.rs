@@ -1,15 +1,17 @@
-use reqwest::Error;
-use serde::Deserialize;
 use std::collections::HashMap;
 use std::fmt::{self, Formatter};
 
+use reqwest::Error;
+use serde::Deserialize;
+
+#[derive(Clone)]
 pub struct GraphQLError {
   message: String,
   json: Option<Vec<GraphQLErrorMessage>>,
 }
 
 // https://spec.graphql.org/June2018/#sec-Errors
-#[derive(Deserialize, Debug)]
+#[derive(Deserialize, Debug, Clone)]
 #[allow(dead_code)]
 pub struct GraphQLErrorMessage {
   message: String,
@@ -18,14 +20,14 @@ pub struct GraphQLErrorMessage {
   path: Option<Vec<GraphQLErrorPathParam>>,
 }
 
-#[derive(Deserialize, Debug)]
+#[derive(Deserialize, Debug, Clone)]
 #[allow(dead_code)]
 pub struct GraphQLErrorLocation {
   line: u32,
   column: u32,
 }
 
-#[derive(Deserialize, Debug)]
+#[derive(Deserialize, Debug, Clone)]
 #[serde(untagged)]
 pub enum GraphQLErrorPathParam {
   String(String),
@@ -40,19 +42,23 @@ impl GraphQLError {
     }
   }
 
-  pub fn with_json(json: Vec<GraphQLErrorMessage>) -> Self {
+  pub fn with_message_and_json(message: impl AsRef<str>, json: Vec<GraphQLErrorMessage>) -> Self {
     Self {
-      message: String::from("Look at json field for more details"),
+      message: message.as_ref().to_string(),
       json: Some(json),
     }
+  }
+
+  pub fn with_json(json: Vec<GraphQLErrorMessage>) -> Self {
+    Self::with_message_and_json("Look at json field for more details", json)
   }
 
   pub fn message(&self) -> &str {
     &self.message
   }
 
-  pub fn json(&self) -> &Option<Vec<GraphQLErrorMessage>> {
-    &self.json
+  pub fn json(&self) -> Option<Vec<GraphQLErrorMessage>> {
+    self.json.clone()
   }
 }
 
@@ -87,7 +93,7 @@ impl fmt::Debug for GraphQLError {
   }
 }
 
-impl std::convert::From<reqwest::Error> for GraphQLError {
+impl From<Error> for GraphQLError {
   fn from(error: Error) -> Self {
     Self {
       message: error.to_string(),
