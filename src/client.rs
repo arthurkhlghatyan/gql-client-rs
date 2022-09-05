@@ -12,6 +12,7 @@ use crate::error::{GraphQLError, GraphQLErrorMessage};
 #[derive(Clone, Debug)]
 pub struct GQLClient {
   endpoint: String,
+  timeout: u64,
   header_map: HeaderMap,
 }
 
@@ -36,21 +37,22 @@ impl GQLClient {
   #[cfg(not(target_arch = "wasm32"))]
   fn client(&self) -> Result<reqwest::Client, GraphQLError> {
     Client::builder()
-      .timeout(std::time::Duration::from_secs(5))
+      .timeout(std::time::Duration::from_secs(self.timeout))
       .build()
       .map_err(|e| GraphQLError::with_text(format!("Can not create client: {:?}", e)))
   }
 }
 
 impl GQLClient {
-  pub fn new(endpoint: impl AsRef<str>) -> Self {
+  pub fn new(endpoint: impl AsRef<str>, timeout: u64) -> Self {
     Self {
       endpoint: endpoint.as_ref().to_string(),
+      timeout: timeout,
       header_map: HeaderMap::new(),
     }
   }
 
-  pub fn new_with_headers(endpoint: impl AsRef<str>, headers: HashMap<&str, &str>) -> Self {
+  pub fn new_with_headers(endpoint: impl AsRef<str>, timeout: u64, headers: HashMap<&str, &str>) -> Self {
     let mut header_map = HeaderMap::new();
 
     for (str_key, str_value) in headers {
@@ -62,6 +64,7 @@ impl GQLClient {
 
     Self {
       endpoint: endpoint.as_ref().to_string(),
+      timeout: timeout,
       header_map,
     }
   }

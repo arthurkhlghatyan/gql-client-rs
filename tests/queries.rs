@@ -9,7 +9,7 @@ const ENDPOINT: &'static str = "https://graphqlzero.almansi.me/api";
 
 #[tokio::test]
 pub async fn fetches_one_post() {
-  let client = Client::new(ENDPOINT);
+  let client = Client::new(ENDPOINT, 5);
 
   let query = r#"
     query SinglePostQuery($id: ID!) {
@@ -33,7 +33,7 @@ pub async fn fetches_all_posts() {
   let mut headers = HashMap::new();
   headers.insert("content-type", "application/json");
 
-  let client = Client::new_with_headers(ENDPOINT, headers);
+  let client = Client::new_with_headers(ENDPOINT, 5, headers);
 
   let query = r#"
     query AllPostsQuery {
