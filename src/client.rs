@@ -47,7 +47,7 @@ impl GQLClient {
   pub fn new(endpoint: impl AsRef<str>, timeout: u64) -> Self {
     Self {
       endpoint: endpoint.as_ref().to_string(),
-      timeout: timeout,
+      timeout,
       header_map: HeaderMap::new(),
     }
   }
@@ -64,7 +64,7 @@ impl GQLClient {
 
     Self {
       endpoint: endpoint.as_ref().to_string(),
-      timeout: timeout,
+      timeout,
       header_map,
     }
   }
