@@ -97,7 +97,7 @@ impl GQLClient {
     self.query_with_vars_unwrap::<K, ()>(query, ()).await
   }
 
-  pub async fn query_with_vars_unwrap<K, T: Serialize + Clone>(
+  pub async fn query_with_vars_unwrap<K, T: Serialize>(
     &self,
     query: &str,
     variables: T,
@@ -114,7 +114,7 @@ impl GQLClient {
     }
   }
 
-  pub async fn query_with_vars<K, T: Serialize + Clone>(
+  pub async fn query_with_vars<K, T: Serialize>(
     &self,
     query: &str,
     variables: T,
@@ -127,7 +127,7 @@ impl GQLClient {
       .await
   }
 
-  async fn query_with_vars_by_endpoint<K, T: Serialize + Clone>(
+  async fn query_with_vars_by_endpoint<K, T: Serialize>(
     &self,
     endpoint: impl AsRef<str>,
     query: &str,
@@ -148,7 +148,7 @@ impl GQLClient {
     let client: Client = self.client()?;
     let body = RequestBody {
       query: query.to_string(),
-      variables: variables.clone(),
+      variables,
     };
 
     loop {
@@ -185,10 +185,10 @@ impl GQLClient {
         }
 
         // without schema
-        endpoint = if redirect_url.starts_with("/") {
-          format!("{}://{}{}", schema, host.to_string(), redirect_url)
+        endpoint = if redirect_url.starts_with('/') {
+          format!("{}://{}{}", schema, host, redirect_url)
         } else {
-          format!("{}://{}/{}", schema, host.to_string(), redirect_url)
+          format!("{}://{}/{}", schema, host, redirect_url)
         };
         times += 1;
         continue;
