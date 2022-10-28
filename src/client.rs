@@ -1,19 +1,14 @@
 use std::collections::HashMap;
-use std::str::FromStr;
 
-use reqwest::{
-  header::{HeaderMap, HeaderName, HeaderValue},
-  Client,
-};
+use reqwest::Client;
 use serde::{Deserialize, Serialize};
 
 use crate::error::{GraphQLError, GraphQLErrorMessage};
+use crate::ClientConfig;
 
 #[derive(Clone, Debug)]
 pub struct GQLClient {
-  endpoint: String,
-  timeout: u64,
-  header_map: HeaderMap,
+  config: ClientConfig,
 }
 
 #[derive(Serialize)]
@@ -30,45 +25,56 @@ struct GraphQLResponse<T> {
 
 impl GQLClient {
   #[cfg(target_arch = "wasm32")]
-  fn client(&self) -> Result<reqwest::Client, GraphQLError> {
+  fn client(&self) -> Result<Client, GraphQLError> {
     Ok(Client::new())
   }
 
   #[cfg(not(target_arch = "wasm32"))]
-  fn client(&self) -> Result<reqwest::Client, GraphQLError> {
+  fn client(&self) -> Result<Client, GraphQLError> {
     Client::builder()
-      .timeout(std::time::Duration::from_secs(self.timeout))
+      .timeout(std::time::Duration::from_secs(
+        self.config.timeout.unwrap_or(5),
+      ))
       .build()
       .map_err(|e| GraphQLError::with_text(format!("Can not create client: {:?}", e)))
   }
 }
 
 impl GQLClient {
-  pub fn new(endpoint: impl AsRef<str>, timeout: u64) -> Self {
+  pub fn new(endpoint: impl AsRef<str>) -> Self {
     Self {
-      endpoint: endpoint.as_ref().to_string(),
-      timeout,
-      header_map: HeaderMap::new(),
+      config: ClientConfig {
+        endpoint: endpoint.as_ref().to_string(),
+        timeout: None,
+        headers: Default::default(),
+      },
     }
   }
 
-  pub fn new_with_headers(endpoint: impl AsRef<str>, timeout: u64, headers: HashMap<&str, &str>) -> Self {
-    let mut header_map = HeaderMap::new();
-
-    for (str_key, str_value) in headers {
-      let key = HeaderName::from_str(str_key).unwrap();
-      let val = HeaderValue::from_str(str_value).unwrap();
-
-      header_map.insert(key, val);
-    }
-
+  pub fn new_with_headers(
+    endpoint: impl AsRef<str>,
+    headers: HashMap<impl ToString, impl ToString>,
+  ) -> Self {
+    let _headers: HashMap<String, String> = headers
+      .iter()
+      .map(|(name, value)| (name.to_string(), value.to_string()))
+      .into_iter()
+      .collect();
     Self {
-      endpoint: endpoint.as_ref().to_string(),
-      timeout,
-      header_map,
+      config: ClientConfig {
+        endpoint: endpoint.as_ref().to_string(),
+        timeout: None,
+        headers: Some(_headers),
+      },
     }
   }
 
+  pub fn new_with_config(config: ClientConfig) -> Self {
+    Self { config }
+  }
+}
+
+impl GQLClient {
   pub async fn query<K>(&self, query: &str) -> Result<Option<K>, GraphQLError>
   where
     K: for<'de> Deserialize<'de>,
@@ -95,7 +101,7 @@ impl GQLClient {
       Some(v) => Ok(v),
       None => Err(GraphQLError::with_text(format!(
         "No data from graphql server({}) for this query",
-        self.endpoint
+        self.config.endpoint
       ))),
     }
   }
@@ -108,16 +114,20 @@ impl GQLClient {
   where
     K: for<'de> Deserialize<'de>,
   {
-    let client: reqwest::Client = self.client()?;
+    let client: Client = self.client()?;
     let body = RequestBody {
       query: query.to_string(),
       variables,
     };
 
-    let request = client
-      .post(&self.endpoint)
-      .json(&body)
-      .headers(self.header_map.clone());
+    let mut request = client.post(&self.config.endpoint).json(&body);
+    if let Some(headers) = &self.config.headers {
+      if !headers.is_empty() {
+        for (name, value) in headers {
+          request = request.header(name, value);
+        }
+      }
+    }
 
     let raw_response = request.send().await?;
     let status = raw_response.status();
