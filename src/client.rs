@@ -1,8 +1,9 @@
 use std::collections::HashMap;
 #[cfg(not(target_arch = "wasm32"))]
 use std::convert::TryInto;
+use std::str::FromStr;
 
-use reqwest::Client;
+use reqwest::{Client, Url};
 use serde::{Deserialize, Serialize};
 
 use crate::error::{GraphQLError, GraphQLErrorMessage};
@@ -96,7 +97,7 @@ impl GQLClient {
     self.query_with_vars_unwrap::<K, ()>(query, ()).await
   }
 
-  pub async fn query_with_vars_unwrap<K, T: Serialize>(
+  pub async fn query_with_vars_unwrap<K, T: Serialize + Clone>(
     &self,
     query: &str,
     variables: T,
@@ -113,7 +114,7 @@ impl GQLClient {
     }
   }
 
-  pub async fn query_with_vars<K, T: Serialize>(
+  pub async fn query_with_vars<K, T: Serialize + Clone>(
     &self,
     query: &str,
     variables: T,
@@ -121,50 +122,107 @@ impl GQLClient {
   where
     K: for<'de> Deserialize<'de>,
   {
+    self
+      .query_with_vars_by_endpoint(&self.config.endpoint, query, variables)
+      .await
+  }
+
+  async fn query_with_vars_by_endpoint<K, T: Serialize + Clone>(
+    &self,
+    endpoint: impl AsRef<str>,
+    query: &str,
+    variables: T,
+  ) -> Result<Option<K>, GraphQLError>
+  where
+    K: for<'de> Deserialize<'de>,
+  {
+    let mut times = 1;
+    let mut endpoint = endpoint.as_ref().to_string();
+    let endpoint_url = Url::from_str(&endpoint)
+      .map_err(|e| GraphQLError::with_text(format!("Wrong endpoint: {}. {:?}", endpoint, e)))?;
+    let schema = endpoint_url.scheme();
+    let host = endpoint_url
+      .host()
+      .ok_or_else(|| GraphQLError::with_text(format!("Wrong endpoint: {}", endpoint)))?;
+
     let client: Client = self.client()?;
     let body = RequestBody {
       query: query.to_string(),
-      variables,
+      variables: variables.clone(),
     };
 
-    let mut request = client.post(&self.config.endpoint).json(&body);
-    if let Some(headers) = &self.config.headers {
-      if !headers.is_empty() {
-        for (name, value) in headers {
-          request = request.header(name, value);
+    loop {
+      if times > 10 {
+        return Err(GraphQLError::with_text(format!(
+          "Many redirect location: {}",
+          endpoint
+        )));
+      }
+
+      let mut request = client.post(&endpoint).json(&body);
+      if let Some(headers) = &self.config.headers {
+        if !headers.is_empty() {
+          for (name, value) in headers {
+            request = request.header(name, value);
+          }
         }
       }
+
+      let raw_response = request.send().await?;
+      if let Some(location) = raw_response.headers().get(reqwest::header::LOCATION) {
+        let redirect_url = location.to_str().map_err(|e| {
+          GraphQLError::with_text(format!(
+            "Failed to parse response header: Location. {:?}",
+            e
+          ))
+        })?;
+
+        // if the response location start with http:// or https://
+        if redirect_url.starts_with("http://") || redirect_url.starts_with("https://") {
+          times += 1;
+          endpoint = redirect_url.to_string();
+          continue;
+        }
+
+        // without schema
+        endpoint = if redirect_url.starts_with("/") {
+          format!("{}://{}{}", schema, host.to_string(), redirect_url)
+        } else {
+          format!("{}://{}/{}", schema, host.to_string(), redirect_url)
+        };
+        times += 1;
+        continue;
+      }
+
+      let status = raw_response.status();
+      let response_body_text = raw_response
+        .text()
+        .await
+        .map_err(|e| GraphQLError::with_text(format!("Can not get response: {:?}", e)))?;
+
+      let json: GraphQLResponse<K> = serde_json::from_str(&response_body_text).map_err(|e| {
+        GraphQLError::with_text(format!(
+          "Failed to parse response: {:?}. The response body is: {}",
+          e, response_body_text
+        ))
+      })?;
+
+      if !status.is_success() {
+        return Err(GraphQLError::with_message_and_json(
+          format!("The response is [{}]", status.as_u16()),
+          json.errors.unwrap_or_default(),
+        ));
+      }
+
+      // Check if error messages have been received
+      if json.errors.is_some() {
+        return Err(GraphQLError::with_json(json.errors.unwrap_or_default()));
+      }
+      if json.data.is_none() {
+        log::warn!(target: "gql-client", "The deserialized data is none, the response is: {}", response_body_text);
+      }
+
+      return Ok(json.data);
     }
-
-    let raw_response = request.send().await?;
-    let status = raw_response.status();
-    let response_body_text = raw_response
-      .text()
-      .await
-      .map_err(|e| GraphQLError::with_text(format!("Can not get response: {:?}", e)))?;
-
-    let json: GraphQLResponse<K> = serde_json::from_str(&response_body_text).map_err(|e| {
-      GraphQLError::with_text(format!(
-        "Failed to parse response: {:?}. The response body is: {}",
-        e, response_body_text
-      ))
-    })?;
-
-    if !status.is_success() {
-      return Err(GraphQLError::with_message_and_json(
-        format!("The response is [{}]", status.as_u16()),
-        json.errors.unwrap_or_default(),
-      ));
-    }
-
-    // Check if error messages have been received
-    if json.errors.is_some() {
-      return Err(GraphQLError::with_json(json.errors.unwrap_or_default()));
-    }
-    if json.data.is_none() {
-      log::warn!(target: "gql-client", "The deserialized data is none, the response is: {}", response_body_text);
-    }
-
-    Ok(json.data)
   }
 }
