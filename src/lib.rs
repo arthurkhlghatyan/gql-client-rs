@@ -42,7 +42,7 @@
 //!        }
 //!    "#;
 //!
-//!    let client = Client::new(endpoint, 5);
+//!    let client = Client::new(endpoint);
 //!    let vars = Vars { id: 1 };
 //!    let data = client.query_with_vars_unwrap::<Data, Vars>(query, vars).await.unwrap();
 //!
@@ -68,7 +68,7 @@
 //!    let mut headers = HashMap::new();
 //!    headers.insert("authorization", "Bearer <some_token>");
 //!
-//!    let client = Client::new_with_headers(endpoint, 5, headers);
+//!    let client = Client::new_with_headers(endpoint, headers);
 //!
 //!    Ok(())
 //!}
@@ -114,7 +114,7 @@
 //!        }
 //!    "#;
 //!
-//!    let client = Client::new(endpoint, 5);
+//!    let client = Client::new(endpoint);
 //!    let vars = Vars { id: 1 };
 //!    let error = client.query_with_vars::<Data, Vars>(query, vars).await.err();
 //!
@@ -126,7 +126,9 @@
 
 mod client;
 mod error;
+mod types;
 
 pub use client::GQLClient as Client;
 pub use error::GraphQLError;
 pub use error::GraphQLErrorMessage;
+pub use types::*;
