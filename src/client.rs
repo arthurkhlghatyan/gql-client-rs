@@ -1,4 +1,6 @@
 use std::collections::HashMap;
+#[cfg(not(target_arch = "wasm32"))]
+use std::convert::TryInto;
 
 use reqwest::Client;
 use serde::{Deserialize, Serialize};
@@ -31,10 +33,13 @@ impl GQLClient {
 
   #[cfg(not(target_arch = "wasm32"))]
   fn client(&self) -> Result<Client, GraphQLError> {
-    Client::builder()
-      .timeout(std::time::Duration::from_secs(
-        self.config.timeout.unwrap_or(5),
-      ))
+    let mut builder = Client::builder().timeout(std::time::Duration::from_secs(
+      self.config.timeout.unwrap_or(5),
+    ));
+    if let Some(proxy) = &self.config.proxy {
+      builder = builder.proxy(proxy.clone().try_into()?);
+    }
+    builder
       .build()
       .map_err(|e| GraphQLError::with_text(format!("Can not create client: {:?}", e)))
   }
@@ -47,6 +52,7 @@ impl GQLClient {
         endpoint: endpoint.as_ref().to_string(),
         timeout: None,
         headers: Default::default(),
+        proxy: None,
       },
     }
   }
@@ -65,6 +71,7 @@ impl GQLClient {
         endpoint: endpoint.as_ref().to_string(),
         timeout: None,
         headers: Some(_headers),
+        proxy: None,
       },
     }
   }
