@@ -8,7 +8,7 @@ const ENDPOINT: &'static str = "https://graphqlzero.almansi.me/api";
 
 #[tokio::test]
 pub async fn properly_parses_json_errors() {
-  let client = Client::new(ENDPOINT, 5);
+  let client = Client::new(ENDPOINT);
 
   // Send incorrect query
   let query = r#"
