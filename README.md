@@ -51,7 +51,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let vars = Vars { id: 1 };
     let data = client.query_with_vars::<Data, Vars>(query, vars).await.unwrap();
 
-    println!("Id: {}, Name: {}", data.user.id, data.user.name);
+    println!("Id: {}, Name: {}", data.unwrap().user.id, data.unwrap().user.name);
 
     Ok(())
 }
