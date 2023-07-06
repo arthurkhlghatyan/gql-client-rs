@@ -101,3 +101,5 @@ impl From<Error> for GraphQLError {
     }
   }
 }
+
+impl std::error::Error for GraphQLError { }
