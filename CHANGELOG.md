@@ -3,6 +3,10 @@
 
 Project Changelog. Starts from version 0.2.1
 
+## [1.1.0] - 2024-28-03
+
+Add cookie support.
+
 ## [1.0.1] - 2021-13-04
 
 Minor bug fix.

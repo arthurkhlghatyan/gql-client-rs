@@ -17,7 +17,7 @@ maintenance = { status = "actively-developed" }
 [dependencies]
 serde      = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
-reqwest    = { version = "0.11", features = ["json"] }
+reqwest    = { version = "0.11", features = ["json", "cookies"] }
 log        = "0.4"
 
 [dev-dependencies]
