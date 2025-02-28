@@ -47,5 +47,5 @@ pub async fn fetches_all_posts() {
 
   let data: AllPosts = client.query_unwrap::<AllPosts>(query).await.unwrap();
 
-  assert!(data.posts.data.len() > 0_usize);
+  assert!(!data.posts.data.is_empty());
 }
