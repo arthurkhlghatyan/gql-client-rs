@@ -62,16 +62,16 @@ impl GQLClient {
     endpoint: impl AsRef<str>,
     headers: HashMap<impl ToString, impl ToString>,
   ) -> Self {
-    let _headers: HashMap<String, String> = headers
+    let headers: HashMap<String, String> = headers
       .iter()
       .map(|(name, value)| (name.to_string(), value.to_string()))
-      .into_iter()
       .collect();
+
     Self {
       config: ClientConfig {
         endpoint: endpoint.as_ref().to_string(),
         timeout: None,
-        headers: Some(_headers),
+        headers: Some(headers),
         proxy: None,
       },
     }

@@ -4,7 +4,7 @@ use crate::structs::{inputs::SinglePostVariables, SinglePost};
 use gql_client::Client;
 
 // Initialize endpoint
-const ENDPOINT: &'static str = "https://graphqlzero.almansi.me/api";
+const ENDPOINT: &str = "https://graphqlzero.almansi.me/api";
 
 #[tokio::test]
 pub async fn properly_parses_json_errors() {
@@ -25,7 +25,7 @@ pub async fn properly_parses_json_errors() {
     .await
     .err();
 
-  assert_eq!(errors.is_some(), true);
+  assert!(errors.is_some());
   let err_data = errors.unwrap();
   let err_json = err_data.json().map(|v| v.len()).unwrap_or_default();
   assert!(err_json > 0usize);
