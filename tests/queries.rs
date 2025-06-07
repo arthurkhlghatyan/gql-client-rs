@@ -5,7 +5,7 @@ use gql_client::Client;
 use std::collections::HashMap;
 
 // Initialize endpoint
-const ENDPOINT: &'static str = "https://graphqlzero.almansi.me/api";
+const ENDPOINT: &str = "https://graphqlzero.almansi.me/api";
 
 #[tokio::test]
 pub async fn fetches_one_post() {
@@ -47,5 +47,5 @@ pub async fn fetches_all_posts() {
 
   let data: AllPosts = client.query_unwrap::<AllPosts>(query).await.unwrap();
 
-  assert!(data.posts.data.len() > 0 as usize);
+  assert!(!data.posts.data.is_empty());
 }

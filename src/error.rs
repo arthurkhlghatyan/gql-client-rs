@@ -29,6 +29,7 @@ pub struct GraphQLErrorLocation {
 
 #[derive(Deserialize, Debug, Clone)]
 #[serde(untagged)]
+#[allow(dead_code)]
 pub enum GraphQLErrorPathParam {
   String(String),
   Number(u32),

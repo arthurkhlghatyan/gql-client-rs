@@ -9,6 +9,6 @@ fn test_url() {
   let host = url.host().unwrap();
   assert_eq!(
     "https://subql.darwinia.network",
-    format!("{}://{}", schema, host.to_string())
+    format!("{}://{}", schema, host)
   );
 }
