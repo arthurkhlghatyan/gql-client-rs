@@ -1,6 +1,6 @@
 [package]
 name        = "gql_client"
-version     = "1.0.8"
+version     = "1.1.0"
 authors     = ["Arthur Khlghatyan <arthur.khlghatyan@gmail.com>"]
 edition     = "2021"
 description = "Minimal GraphQL client for Rust"
