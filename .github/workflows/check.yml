@@ -10,7 +10,7 @@ jobs:
     name: Cargo clippy
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v6
 
       - name: Clippy
         run: cargo clippy --all -- -D warnings
@@ -19,7 +19,7 @@ jobs:
     name: Cargo test std
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v6
 
       - name: Test
         run: cargo test
@@ -28,9 +28,7 @@ jobs:
     name: Cargo test wasm32
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v6
 
       - name: Check wasm32
         run: cargo check --target wasm32-unknown-unknown
-
-

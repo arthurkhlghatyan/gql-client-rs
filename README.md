@@ -2,7 +2,7 @@
 
 Minimal GraphQL client for Rust
 
-[![Build Status](https://travis-ci.com/arthurkhlghatyan/gql-client-rs.svg?branch=master)](https://travis-ci.com/arthurkhlghatyan/gql-client-rs)
+[![Build Status](https://github.com/arthurkhlghatyan/gql-client-rs/workflows/Check/badge.svg)](https://github.com/arthurkhlghatyan/gql-client-rs/actions)
 [![crates.io](https://img.shields.io/crates/v/gql_client.svg)](https://crates.io/crates/gql_client)
 [![docs](https://docs.rs/gql_client/badge.svg)](https://docs.rs/gql_client/latest/gql_client/)
 
@@ -49,9 +49,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     let client = Client::new(endpoint);
     let vars = Vars { id: 1 };
-    let data = client.query_with_vars::<Data, Vars>(query, vars).await.unwrap();
+    let data = client.query_with_vars::<Data, Vars>(query, vars).await.unwrap().unwrap();
 
-    println!("Id: {}, Name: {}", data.unwrap().user.id, data.unwrap().user.name);
+    println!("Id: {}, Name: {}", data.user.id, data.user.name);
 
     Ok(())
 }
