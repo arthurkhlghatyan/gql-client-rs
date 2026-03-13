@@ -2,7 +2,7 @@ use std::collections::HashMap;
 use std::fmt::{self, Formatter};
 
 use reqwest::Error;
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 
 #[derive(Clone)]
 pub struct GraphQLError {
@@ -10,8 +10,9 @@ pub struct GraphQLError {
   json: Option<Vec<GraphQLErrorMessage>>,
 }
 
+// It is problematic to read errors on the client side, I opted to add serialize so that I can extract the error details as JSON from the response body and deserialize them into a local struct(for now at least). Maybe getters might be a better approach?
 // https://spec.graphql.org/June2018/#sec-Errors
-#[derive(Deserialize, Debug, Clone)]
+#[derive(Deserialize, Serialize, Debug, Clone)]
 #[allow(dead_code)]
 pub struct GraphQLErrorMessage {
   message: String,
@@ -20,14 +21,14 @@ pub struct GraphQLErrorMessage {
   path: Option<Vec<GraphQLErrorPathParam>>,
 }
 
-#[derive(Deserialize, Debug, Clone)]
+#[derive(Deserialize, Serialize, Debug, Clone)]
 #[allow(dead_code)]
 pub struct GraphQLErrorLocation {
   line: u32,
   column: u32,
 }
 
-#[derive(Deserialize, Debug, Clone)]
+#[derive(Deserialize, Serialize, Debug, Clone)]
 #[serde(untagged)]
 #[allow(dead_code)]
 pub enum GraphQLErrorPathParam {
